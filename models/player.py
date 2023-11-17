@@ -3,7 +3,7 @@ from auxiliar import SurfaceManager as sf
 from constantes import *
 
 class Personaje():
-    def __init__(self, coord_x, coord_y, frame_rate = 100, speed_walk = 6, gravity = 16, jump = 32, vida = 3) -> None:
+    def __init__(self, coord_x, coord_y, frame_rate = 100, speed_walk = 6, gravity = 16, jump = 32) -> None:
         """Inicializa un objeto Jugador.
 
         Args:
@@ -23,6 +23,11 @@ class Personaje():
         self.__jump_l = sf.get_surface_from_spritesheet('./assets/player/Jump/player_jump.png', 6, 1, flip=True)
         self.__attack_physical_r = sf.get_surface_from_spritesheet("./assets/player/Attack/Melee/player_atk_melee.png", 10, 1)
         self.__attack_physical_l = sf.get_surface_from_spritesheet("./assets/player/Attack/Melee/player_atk_melee.png", 10, 1, flip=True)
+        self.__shoot_r = sf.get_surface_from_spritesheet("./assets/player/Attack/Shot/player_shot.png", 28, 2)
+        self.__shoot_l = sf.get_surface_from_spritesheet("./assets/player/Attack/Shot/player_shot.png", 28, 2, flip=True)
+        #self.__hurt_r = sf.get_surface_from_spritesheet("./assets/player/Damage/player_damage.png", 3, 1)
+        #self.__hurt_l = sf.get_surface_from_spritesheet("./assets/player/Damage/player_damage.png", 3, 1, flip=True)
+        
         self.__move_x = coord_x
         self.__move_y = coord_y
         self.__speed_walk = speed_walk
@@ -38,11 +43,12 @@ class Personaje():
         self.__actual_img_animation = self.__actual_animation[self.__initial_frame]
         self.__rect = self.__actual_img_animation.get_rect()
         self.__is_looking_right = True
-        self.__vida = vida
+        #self.__vida = vida
         self.__is_attacking = False
         self.__frame_rate_attack = 50
-        self.__is_hurt = False
-        self.__is_dead = False
+        #self.__is_hurt = False
+        #self.__is_dead = False
+        self.__is_shoot = False
     
     def __set_x_animations_preset(self, move_x: int, animation_list: list[pg.surface.Surface], look_r: bool):
         """Configura las propiedades relacionadas con la animación horizontal del jugador.
@@ -65,6 +71,34 @@ class Personaje():
         self.__actual_animation = self.__jump_r if self.__is_looking_right else self.__jump_l
         self.__initial_frame = 0
         self.__is_jumping = True
+    
+    def __set_attack_animation(self, attack_r, attack_l):
+        """Configura las propiedades relacionadas con la animación de ataque del jugador.
+
+        Args:
+            attack_r (list[pg.surface.Surface]): Lista de superficies de animación de ataque hacia la derecha.
+            attack_l (list[pg.surface.Surface]): Lista de superficies de animación de ataque hacia la izquierda.
+        """
+        if self.__is_looking_right:
+            self.__actual_animation = attack_r
+        else:
+            self.__actual_animation = attack_l
+        self.__initial_frame = 0
+        self.__frame_rate = self.__frame_rate_attack
+    
+    def __set_shoot_animation(self, shoot_r, shoot_l):
+        """Configura las propiedades relacionadas con la animación de disparo del jugador.
+
+        Args:
+            shoot_r (list[pg.surface.Surface]): Lista de superficies de animación de disparo hacia la derecha.
+            shoot_l (list[pg.surface.Surface]): Lista de superficies de animación de disparo hacia la izquierda.
+        """
+        if self.__is_looking_right:
+            self.__actual_animation = shoot_r
+        else:
+            self.__actual_animation = shoot_l
+        self.__initial_frame = 0
+        self.__frame_rate = self.__frame_rate_attack
     
     def walk(self, direction: str = 'Right'):
         """Inicia la animación de caminar en la dirección especificada.
@@ -101,20 +135,6 @@ class Personaje():
             self.__is_jumping = False
             self.stay()
     
-    def __set_attack_animation(self, attack_r, attack_l):
-        """Configura las propiedades relacionadas con la animación de ataque del jugador.
-
-        Args:
-            attack_r (list[pg.surface.Surface]): Lista de superficies de animación de ataque hacia la derecha.
-            attack_l (list[pg.surface.Surface]): Lista de superficies de animación de ataque hacia la izquierda.
-        """
-        if self.__is_looking_right:
-            self.__actual_animation = attack_r
-        else:
-            self.__actual_animation = attack_l
-        self.__initial_frame = 0
-        self.__frame_rate = self.__frame_rate_attack
-    
     def do_attack(self, attack=True):
         """Realiza el ataque del jugador."""
         if attack and not self.__is_attacking:
@@ -123,6 +143,15 @@ class Personaje():
             self.__is_attacking = False
             self.stay()
     
+    def shoot(self, shoot=True):
+        """Realiza el disparo del jugador
+        """
+        if shoot and not self.__is_shoot:
+            print("Animacion de disparo")
+            self.__set_shoot_animation(self.__shoot_r, self.__shoot_l)
+        else:
+            self.__is_shoot = False
+            self.stay()
     
     def __set_borders_limits(self) -> int:
         """Limita el movimiento del jugador dentro de los bordes de la ventana.

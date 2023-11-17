@@ -10,7 +10,7 @@ clock = pygame.time.Clock()
 background = pygame.image.load("./assets/background/coruscant_exterior.png")
 background = pygame.transform.scale(background, (ANCHO_PANTALLA, ALTO_PANTALLA))
 
-anakin = Personaje(0, 0, 70, 20, 16, 32)
+anakin = Personaje(0, 0, 80, 20, 16, 32)
 
 while EJECUTANDO:
     lista_eventos = pygame.event.get()
@@ -22,6 +22,8 @@ while EJECUTANDO:
                 elif event.key == pygame.K_t:
                     print("Estoy atacando")
                     anakin.do_attack(True)
+                elif event.key == pygame.K_y:
+                    anakin.shoot(True)
             case pygame.QUIT:
                 print('Estoy CERRANDO el JUEGO')
                 EJECUTANDO = False
