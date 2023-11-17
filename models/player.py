@@ -3,7 +3,7 @@ from auxiliar import SurfaceManager as sf
 from constantes import *
 
 class Personaje():
-    def __init__(self, coord_x, coord_y, frame_rate = 100, speed_walk = 5, gravity = 10, jump = 20) -> None:
+    def __init__(self, coord_x, coord_y, frame_rate = 100, speed_walk = 6, gravity = 16, jump = 32, vida = 3) -> None:
         """Inicializa un objeto Jugador.
 
         Args:
@@ -13,6 +13,7 @@ class Personaje():
         - speed_walk (int): Velocidad de caminar del jugador (valor predeterminado: 5).
         - gravity (int): Gravedad aplicada al jugador durante el salto (valor predeterminado: 10).
         - jump (int): Altura del salto del jugador (valor predeterminado: 20).
+        - vida (int): Vida del jugador al empezar el juego. (valor predeterminado: 3)
         """
         self.__iddle_r = sf.get_surface_from_spritesheet("./assets/player/Iddle/player_idle.png", 5, 1)
         self.__iddle_l = sf.get_surface_from_spritesheet('./assets/player/Iddle/player_idle.png', 5, 1, flip=True)
@@ -20,9 +21,12 @@ class Personaje():
         self.__walk_l = sf.get_surface_from_spritesheet('./assets/player/Walk/player_walk.png', 13, 1, flip=True)
         self.__jump_r = sf.get_surface_from_spritesheet('./assets/player/Jump/player_jump.png', 6, 1)
         self.__jump_l = sf.get_surface_from_spritesheet('./assets/player/Jump/player_jump.png', 6, 1, flip=True)
+        self.__attack_physical_r = sf.get_surface_from_spritesheet("./assets/player/Attack/Melee/player_atk_melee.png", 10, 1)
+        self.__attack_physical_l = sf.get_surface_from_spritesheet("./assets/player/Attack/Melee/player_atk_melee.png", 10, 1, flip=True)
         self.__move_x = coord_x
         self.__move_y = coord_y
         self.__speed_walk = speed_walk
+        #self.__speed_run = speed_run
         self.__frame_rate = frame_rate
         self.__player_move_time = 0
         self.__player_animation_time = 0
@@ -34,6 +38,11 @@ class Personaje():
         self.__actual_img_animation = self.__actual_animation[self.__initial_frame]
         self.__rect = self.__actual_img_animation.get_rect()
         self.__is_looking_right = True
+        self.__vida = vida
+        self.__is_attacking = False
+        self.__frame_rate_attack = 50
+        self.__is_hurt = False
+        self.__is_dead = False
     
     def __set_x_animations_preset(self, move_x: int, animation_list: list[pg.surface.Surface], look_r: bool):
         """Configura las propiedades relacionadas con la animación horizontal del jugador.
@@ -92,6 +101,29 @@ class Personaje():
             self.__is_jumping = False
             self.stay()
     
+    def __set_attack_animation(self, attack_r, attack_l):
+        """Configura las propiedades relacionadas con la animación de ataque del jugador.
+
+        Args:
+            attack_r (list[pg.surface.Surface]): Lista de superficies de animación de ataque hacia la derecha.
+            attack_l (list[pg.surface.Surface]): Lista de superficies de animación de ataque hacia la izquierda.
+        """
+        if self.__is_looking_right:
+            self.__actual_animation = attack_r
+        else:
+            self.__actual_animation = attack_l
+        self.__initial_frame = 0
+        self.__frame_rate = self.__frame_rate_attack
+    
+    def do_attack(self, attack=True):
+        """Realiza el ataque del jugador."""
+        if attack and not self.__is_attacking:
+            self.__set_attack_animation(self.__attack_physical_r, self.__attack_physical_l)
+        else:
+            self.__is_attacking = False
+            self.stay()
+    
+    
     def __set_borders_limits(self) -> int:
         """Limita el movimiento del jugador dentro de los bordes de la ventana.
 
@@ -131,12 +163,11 @@ class Personaje():
         if self.__player_animation_time >= self.__frame_rate:
             self.__player_animation_time = 0
             if self.__initial_frame < len(self.__actual_animation) - 1:
+                print("Animacion normal:", self.__initial_frame)
                 self.__initial_frame += 1
             else:
+                print("Reinicio de animacion normal")
                 self.__initial_frame = 0
-                # if self.__is_jumping:
-                #     self.__is_jumping = False
-                #     self.__move_y = 0
     
     def update(self, delta_ms: int):
         """Actualiza el estado del jugador.
@@ -146,6 +177,7 @@ class Personaje():
         """
         self.do_movement(delta_ms)
         self.do_animation(delta_ms)
+        
     
     def draw(self, screen: pg.surface.Surface):
         """Dibuja al jugador en la pantalla.
@@ -155,6 +187,5 @@ class Personaje():
         """
         if DEBUG:
             pg.draw.rect(screen, 'red', self.__rect)
-            #pg.draw.rect(screen, 'green', self.__rect.bottom)
         self.__actual_img_animation = self.__actual_animation[self.__initial_frame]
         screen.blit(self.__actual_img_animation, self.__rect)
