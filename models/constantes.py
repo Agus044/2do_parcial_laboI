@@ -6,3 +6,5 @@ FPS = 60
 EJECUTANDO = True
 
 DEBUG = False
+
+PAUSA = False

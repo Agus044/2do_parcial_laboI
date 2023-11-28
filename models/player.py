@@ -1,9 +1,11 @@
 import pygame as pg
 from auxiliar import SurfaceManager as sf
 from constantes import *
+from caja import Caja
 
-class Personaje():
-    def __init__(self, coord_x, coord_y, frame_rate = 100, speed_walk = 5, gravity = 10, jump = 20) -> None:
+class Personaje(pg.sprite.Sprite):
+    def __init__(self, coord_x, coord_y, frame_rate = 100, speed_walk = 6, gravity = 16, jump = 32) -> None:
+        super().__init__()
         """Inicializa un objeto Jugador.
 
         Args:
@@ -29,7 +31,9 @@ class Personaje():
         self.__player_move_time = 0
         self.__player_animation_time = 0
         self.__initial_frame = 0
+        self.y_start_jump = 0
         self.__vida = 3
+        self.__puntos = 0
         
         self.__move_x = coord_x
         self.__move_y = coord_y
@@ -44,7 +48,7 @@ class Personaje():
         self.__rect.y = coord_y
         
         self.__is_jumping = False
-        self.__is_fall = False
+        #self.__is_fall = False
         self.__is_looking_right = True
         self.__laser_sword = False
         self.__is_shoot = False
@@ -99,16 +103,18 @@ class Personaje():
         Args:
             jumping (bool): True para iniciar el salto, False para detenerlo.
         """
-        if jumping and not self.__is_jumping and self.__is_fall == False:
+        if jumping and not self.__is_jumping:
             self.__set_y_animations_preset()
-        else:
+            self.__initial_frame = 0
+            self.__is_jumping = True
+        elif not jumping:
             self.__is_jumping = False
             self.stay()
     
     def do_attack(self, attack=True):
         """Realiza el ataque del jugador."""
         self.__laser_sword = attack
-        if(attack == True and self.__is_jumping == False and self.__is_fall == False):
+        if(attack == True and self.__is_jumping == False):
             if(self.__actual_animation != self.__attack_physical_r and self.__actual_animation != self.__attack_physical_l):
                 self.__initial_frame = 0
                 if(self.__is_looking_right == True):
@@ -120,7 +126,7 @@ class Personaje():
         """Realiza el disparo del jugador
         """
         self.__is_shoot = shoot
-        if(shoot == True and self.__is_jumping == False and self.__is_fall == False):
+        if(shoot == True and self.__is_jumping == False):
             if(self.__actual_animation != self.__shoot_r and self.__actual_animation != self.__shoot_l):
                 self.__initial_frame = 0
                 if(self.__is_looking_right == True):
@@ -140,9 +146,25 @@ class Personaje():
         elif self.__move_x < 0:
             pixels_move = self.__move_x if self.__rect.x > 0 else 0
         return pixels_move
+    
+    def check_collision_with_plataforms(self, plataformas):
+        """Verifica la colision con las plataformas
+
+        Args:
+            plataformas (list[Plataforma]): lista de instancias de la clase Plataforma
+        """
+        for plataforma in plataformas:
+            if self.__rect.colliderect(plataforma.rect) and self.__rect.y < plataforma.rect.y:
+                self.__rect.y = plataforma.rect.y - self.__rect.height
+                self.__is_jumping = False
+                self.__move_y = 0
+    
+    def check_collision_with_box(self, caja_group):
+        if pg.sprite.spritecollide(self, caja_group, True):
+            self.__puntos += 10
 
 
-    def do_movement(self, delta_ms: int):
+    def do_movement(self, delta_ms: int, plataformas):
         """Realiza el movimiento del jugador.
 
         Args:
@@ -151,11 +173,30 @@ class Personaje():
         self.__player_move_time += delta_ms
         if self.__player_move_time >= self.__frame_rate:
             self.__player_move_time = 0
+            
+            self.check_collision_with_plataforms(plataformas)
+            
+            # Verifica si el jugador está en el suelo
+            on_ground = False
+            for plataforma in plataformas:
+                if self.__rect.colliderect(plataforma.rect) and self.__rect.y < plataforma.rect.y:
+                    on_ground = True
+                    self.__rect.y = plataforma.rect.y - self.__rect.height
+                    self.__move_y = 0
+            
+            # Si no está en el suelo y no está saltando, aplica gravedad
+            if not on_ground and not self.__is_jumping:
+                self.__rect.y += self.__gravity
+
+            # aplica gravedad si no está en el suelo
+            if not self.__is_jumping:
+                self.__rect.y += self.__gravity
+
             self.__rect.x += self.__set_borders_limits()
             self.__rect.y += self.__move_y
-            # Parte relacionado a saltar
-            if self.__rect.y < 300:
-                self.__rect.y += self.__gravity
+
+            if self.__is_jumping:
+                self.y_start_jump = self.__rect.y
 
     def do_animation(self, delta_ms: int):
         """Realiza la animación del jugador.
@@ -167,19 +208,19 @@ class Personaje():
         if self.__player_animation_time >= self.__frame_rate:
             self.__player_animation_time = 0
             if self.__initial_frame < len(self.__actual_animation) - 1:
-                print("Animacion normal:", self.__initial_frame)
+                #print("Animacion normal:", self.__initial_frame)
                 self.__initial_frame += 1
             else:
-                print("Reinicio de animacion normal")
+                #print("Reinicio de animacion normal")
                 self.__initial_frame = 0
     
-    def update(self, delta_ms: int):
+    def update(self, delta_ms: int, plataformas):
         """Actualiza el estado del jugador.
 
         Args:
             delta_ms (int): Tiempo transcurrido desde la última actualización en milisegundos.
         """
-        self.do_movement(delta_ms)
+        self.do_movement(delta_ms, plataformas)
         self.do_animation(delta_ms)
         
     
@@ -192,4 +233,4 @@ class Personaje():
         if DEBUG:
             pg.draw.rect(screen, 'red', self.__rect)
         self.__actual_img_animation = self.__actual_animation[self.__initial_frame]
-        screen.blit(self.__actual_img_animation, self.__rect)
+        screen.blit(self.__actual_img_animation, (self.__rect.x, self.__rect.y))

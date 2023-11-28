@@ -1,4 +1,7 @@
-from player import *
+import pygame as pg
+import random
+from auxiliar import SurfaceManager as sf
+from constantes import *
 
 class Enemigo():
     def __init__(self, enemie_type: int, coord_x, coord_y, speed_walk: int, speed: int, frame_rate = 100) -> None:
@@ -22,21 +25,16 @@ class Enemigo():
             self.__die_r = sf.get_surface_from_spritesheet("./assets/enemie2/Dead/enemie2_dead.png", 8, 1)
             self.__die_l = sf.get_surface_from_spritesheet("./assets/enemie2/Dead/enemie2_dead.png", 8, 1, flip=True)
         
-        self.__enemie_move_time = 0
         self.__enemie_animation_time = 0
+        self.__enemie_move_time = 0
         self.__initial_frame = 0
-        self.__vida = 3
-        
         self.__move_x = coord_x
         self.__speed_walk = speed_walk
         self.__frame_rate = frame_rate
         self.__speed = speed
-        self.__actual_animation = self.__walk_r
+        self.__actual_animation = self.__stay_r
         self.__actual_img_animation = self.__actual_animation[self.__initial_frame]
         self.__rect = self.__actual_img_animation.get_rect()
-        self.__rect.x = coord_x
-        self.__rect.y = coord_y
-        
     
     def __update_direction(self):
         """Actualiza la dirección del enemigo si llega a los bordes de la pantalla.

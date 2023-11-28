@@ -1,0 +1,18 @@
+{
+
+    "background": "./assets/background/hangar.png",
+    "personaje": {"x": 0, "y": 0, "frame_rate": 70, "speed_walk": 20},
+    "plataformas": [
+        {"x": 0, "y": 500, "ancho": 800, "alto": 20, "imagen": "./assets/background/Terrain/plataforma.png"},
+        {"x": 350, "y": 350, "ancho": 400, "alto": 20, "imagen": "./assets/background/Terrain/plataforma.png"},
+        {"x": 150, "y": 250, "ancho": 100, "alto": 20, "imagen": "./assets/background/Terrain/plataforma.png"},
+        {"x": 50, "y": 200, "ancho": 50, "alto": 20, "imagen": "./assets/background/Terrain/plataforma.png"},
+        {"x": 250, "y": 100, "ancho": 400, "alto": 20, "imagen": "./assets/background/Terrain/plataforma.png"}
+    ],
+    "cajas": [
+        {"x": 360, "y": 330, "imagen": "./assets/items/box/box.png"},
+        {"x": 500, "y": 80, "imagen": "./assets/items/box/box.png"},
+        {"x": 50, "y": 180, "imagen": "./assets/items/box/box.png"}
+    ]
+
+}
