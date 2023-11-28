@@ -29,12 +29,6 @@ while EJECUTANDO:
             case pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     anakin.jump(True)
-                elif event.key == pygame.K_t:
-                    anakin.do_attack(True)
-                    print("Estoy atacando")
-                elif event.key == pygame.K_y:
-                    anakin.shoot(True)
-                    print("Estoy disparando")
                 elif event.key == pygame.K_p:
                     PAUSA = not PAUSA
             case pygame.QUIT:
@@ -52,6 +46,8 @@ while EJECUTANDO:
         anakin.walk('Left')
     if not lista_teclas_presionadas[pygame.K_RIGHT] and not lista_teclas_presionadas[pygame.K_LEFT]:
         anakin.stay()
+    if lista_teclas_presionadas[pygame.K_SPACE]:
+        anakin.jump(True)
     
     
     screen.blit(bg, bg.get_rect())
