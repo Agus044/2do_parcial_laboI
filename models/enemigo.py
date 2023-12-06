@@ -1,101 +1,151 @@
 import pygame as pg
 import random
+from proyectil import Proyectil
 from auxiliar import SurfaceManager as sf
 from constantes import *
 
-class Enemigo():
-    def __init__(self, enemie_type: int, coord_x, coord_y, speed_walk: int, speed: int, frame_rate = 100) -> None:
-        
+class Enemigo(pg.sprite.Sprite):
+    def __init__(self, enemie_type: int, coord_x, coord_y, speed_walk: int = 6, frame_rate: int = 70, shoot_delay: int = 2000, gravity = 16) -> None:
+        super().__init__()
         if enemie_type == 1:
-            self.__walk_r = sf.get_surface_from_spritesheet("./assets/enemie1/Iddle/enemie1_iddle.png", 9, 1)
-            self.__walk_l = sf.get_surface_from_spritesheet("./assets/enemie1/Iddle/enemie1_iddle.png", 9, 1, flip=True)
-            self.__stay_r = sf.get_surface_from_spritesheet("./assets/enemie1/Walk/enemie1_walk.png", 6, 1)
-            self.__stay_l = sf.get_surface_from_spritesheet("./assets/enemie1/Walk/enemie1_walk.png", 6, 1, flip=True)
-            self.__attack_r = sf.get_surface_from_spritesheet("./assets/enemie1/Shoot/enemie1_shoot.png", 8, 1)
-            self.__attack_l = sf.get_surface_from_spritesheet("./assets/enemie1/Shoot/enemie1_shoot.png", 8, 1, flip=True)
-            self.__die_r = sf.get_surface_from_spritesheet("./assets/enemie1/Dead/enemie1_dead.png", 8, 1)
-            self.__die_l = sf.get_surface_from_spritesheet("./assets/enemie1/Dead/enemie1_dead.png", 8, 1, flip=True)
+            self.walk_r = sf.get_surface_from_spritesheet("./assets/enemie1/Iddle/enemie1_iddle.png", 9, 1)
+            self.walk_l = sf.get_surface_from_spritesheet("./assets/enemie1/Iddle/enemie1_iddle.png", 9, 1, flip=True)
+            self.shoot_r = sf.get_surface_from_spritesheet("./assets/enemie1/Shoot/enemie1_shoot.png", 8, 1)
+            self.shoot_l = sf.get_surface_from_spritesheet("./assets/enemie1/Shoot/enemie1_shoot.png", 8, 1, flip=True)
+            self.die_r = sf.get_surface_from_spritesheet("./assets/enemie1/Dead/enemie1_dead.png", 8, 1)
+            self.die_l = sf.get_surface_from_spritesheet("./assets/enemie1/Dead/enemie1_dead.png", 8, 1, flip=True)
         elif enemie_type == 2:
-            self.__walk_r = sf.get_surface_from_spritesheet("./assets/enemie2/Iddle/enemie2_iddle.png", 8, 1)
-            self.__walk_l = sf.get_surface_from_spritesheet("./assets/enemie2/Iddle/enemie2_iddle.png", 8, 1, flip=True)
-            self.__stay_r = sf.get_surface_from_spritesheet("./assets/enemie2/Walk/enemie2_walk.png", 5, 1)
-            self.__stay_l = sf.get_surface_from_spritesheet("./assets/enemie2/Walk/enemie2_walk.png", 5, 1, flip=True)
-            self.__attack_r = sf.get_surface_from_spritesheet("./assets/enemie2/Shoot/enemie2_shoot.png", 6, 1)
-            self.__attack_l = sf.get_surface_from_spritesheet("./assets/enemie2/Shoot/enemie2_shoot.png", 6, 1, flip=True)
-            self.__die_r = sf.get_surface_from_spritesheet("./assets/enemie2/Dead/enemie2_dead.png", 8, 1)
-            self.__die_l = sf.get_surface_from_spritesheet("./assets/enemie2/Dead/enemie2_dead.png", 8, 1, flip=True)
-        
-        self.__enemie_animation_time = 0
-        self.__enemie_move_time = 0
-        self.__initial_frame = 0
-        self.__move_x = coord_x
-        self.__speed_walk = speed_walk
-        self.__frame_rate = frame_rate
-        self.__speed = speed
-        self.__actual_animation = self.__stay_r
-        self.__actual_img_animation = self.__actual_animation[self.__initial_frame]
-        self.__rect = self.__actual_img_animation.get_rect()
-    
-    def __update_direction(self):
-        """Actualiza la dirección del enemigo si llega a los bordes de la pantalla.
+            self.walk_r = sf.get_surface_from_spritesheet("./assets/enemie2/Iddle/enemie2_iddle.png", 8, 1)
+            self.walk_l = sf.get_surface_from_spritesheet("./assets/enemie2/Iddle/enemie2_iddle.png", 8, 1, flip=True)
+            self.shoot_r = sf.get_surface_from_spritesheet("./assets/enemie2/Shoot/enemie2_shoot.png", 6, 1)
+            self.shoot_l = sf.get_surface_from_spritesheet("./assets/enemie2/Shoot/enemie2_shoot.png", 6, 1, flip=True)
+            self.die_r = sf.get_surface_from_spritesheet("./assets/enemie2/Dead/enemie2_dead.png", 8, 1)
+            self.die_l = sf.get_surface_from_spritesheet("./assets/enemie2/Dead/enemie2_dead.png", 8, 1, flip=True)
+
+        self.speed_walk = speed_walk
+        self.initial_direction = random.choice([-1, 1])  # -1 para izquierda, 1 para derecha
+        self.direction = self.initial_direction
+        self.random_walk_time = 0
+        self.change_direction_interval = random.randint(2000, 5000)  # Cambia la dirección cada 2-5 segundos
+        self.frame_rate = frame_rate
+        self.shoot_delay = shoot_delay
+        self.gravity = gravity
+        self.shoot_time = 0
+        self.initial_frame = 0
+        self.actual_animation = self.walk_r
+        self.image = self.actual_animation[self.initial_frame]
+        self.rect = self.image.get_rect()
+        self.rect.x = coord_x
+        self.rect.y = coord_y
+        self.is_looking_right = True
+        self.enemie_animation_time = 0
+        self.enemie_move_time = 0
+        self.proyectiles = pg.sprite.Group()
+
+    def __set_x_animations_preset(self, move_x, animation_list: list[pg.surface.Surface], look_r: bool):
+        """_summary_
+
+        Args:
+            move_x (_type_): _description_
+            animation_list (list[pg.surface.Surface]): _description_
+            look_r (bool): _description_
         """
-        if self.__rect.x <= 0 or self.__rect.x >= ANCHO_VENTANA - self.__actual_img_animation.get_width():
-            self.__actual_animation = self.__walk_l
+        self.rect.x += move_x
+        self.actual_animation = animation_list
+        self.is_looking_right = look_r
         
-    def __set_borders_limits(self) -> int:
-        """Limita el movimiento del enemigo dentro de los bordes de la ventana.
+    def check_collision_with_plataformas(self, plataformas):
+        """Verifica la colisión del personaje con las plataformas.
+
+        Args:
+        - `plataformas` (List[Plataforma]): Lista de plataformas en el juego.
 
         Returns:
-            int: Cantidad de píxeles que puede moverse horizontalmente.
+        - ([Plataforma]): La plataforma con la cual el personaje colisiona desde arriba, o None si no hay colisión.
         """
-        pixels_move = 0
-        if self.__move_x > 0:
-            pixels_move = self.__speed if self.__rect.x < ANCHO_VENTANA - self.__actual_img_animation.get_width() else 0
-        elif self.__move_x < 0:
-            pixels_move = -self.__speed if self.__rect.x > 0 else 0
-        return pixels_move
+        colisiones = pg.sprite.spritecollide(self, plataformas, False)
+        for plataforma in colisiones:
+            if self.rect.y < plataforma.rect.y:
+                return plataforma
+        return None
+    
+    def __set_borders_limits(self):
+        """Limita el movimiento del jugador dentro de los bordes de la ventana.
 
-    def do_movement(self, delta_ms: int):
-        """Realiza el movimiento del enemigo.
-
-        Args:
-            delta_ms (int): Tiempo transcurrido desde la última actualización en milisegundos.
+        Returns:
+            int: Cantidad de píxeles que puede moverse horizontalmente y verticalmente.
         """
-        self.__enemie_move_time += delta_ms
-        if self.__enemie_move_time >= self.__frame_rate:
-            self.__enemie_move_time = 0
-            self.__rect.x += self.__set_borders_limits()
-            self.__update_direction()
+        pixels_move_x = 0
+        
+        if self.rect.x > 0:
+            pixels_move_x = self.rect.x if self.rect.x < ANCHO_VENTANA - self.image.get_width() else 0
+        elif self.rect.x < 0:
+            pixels_move_x = self.rect.x if self.rect.x > 0 else 0
+        
+        return pixels_move_x
+    
+    def do_movement(self, delta_ms: int, plataformas):
+        self.enemie_move_time += delta_ms
+        self.random_walk_time += delta_ms
 
+        if self.random_walk_time >= self.change_direction_interval:
+            self.random_walk_time = 0
+            self.direction = random.choice([-1, 1])  # Cambia la dirección aleatoriamente
+            self.change_direction_interval = random.randint(2000, 5000)  # Establece un nuevo intervalo de cambio de dirección
+        
+        if self.enemie_move_time >= self.frame_rate:
+            self.enemie_move_time = 0
+            pixel_move_x = self.speed_walk * self.direction
+            self.rect.x += pixel_move_x
+            
+            plataforma_colisionada = self.check_collision_with_plataformas(plataformas)
+
+            if plataforma_colisionada:
+                # Ajustar la posición del jugador en la plataforma
+                self.rect.y = plataforma_colisionada.rect.y - self.rect.height
+    
     def do_animation(self, delta_ms: int):
-        """Realiza la animación del enemigo.
+        """Realiza la animación del personaje.
 
         Args:
-            delta_ms (int): Tiempo transcurrido desde la última actualización en milisegundos.
+        - `delta_ms` (int): El tiempo transcurrido desde la última actualización en milisegundos.
         """
-        if self.__move_x != 0:  # Solo cambia la animación si el enemigo se está moviendo
-            self.__enemie_animation_time += delta_ms
-            if self.__enemie_animation_time >= self.__frame_rate:
-                self.__enemie_animation_time = 0
-                if self.__initial_frame < len(self.__actual_animation) - 1:
-                    self.__initial_frame += 1
-                else:
-                    self.__initial_frame = 0
+        self.enemie_animation_time += delta_ms
+        if self.enemie_animation_time >= self.frame_rate:
+            self.enemie_animation_time = 0
+            if self.initial_frame < len(self.actual_animation) - 1:
+                self.initial_frame += 1
+            else:
+                self.initial_frame = 0
+    
+    def update(self, delta_ms: int, plataformas):
+        self.shoot_time += delta_ms
 
-    def update(self, delta_ms: int):
-        """Actualiza el estado del enemigo.
-
-        Args:
-            delta_ms (int): Tiempo transcurrido desde la última actualización en milisegundos.
-        """
-        self.do_movement(delta_ms)
+        if self.shoot_time >= self.shoot_delay:
+            self.shoot_time = 0
+            self.shoot()
+            
+        self.do_movement(delta_ms, plataformas)
         self.do_animation(delta_ms)
+            
+        for proyectil in self.proyectiles:
+            proyectil.update()
+
+    def shoot(self):
+        proyectil = Proyectil(self.rect.x, self.rect.y, -5, 0, (255, 0, 0))
+        self.proyectiles.add(proyectil)
+        shoot_animation = self.shoot_r if self.is_looking_right else self.shoot_l
+        self.actual_animation = shoot_animation
+        self.initial_frame = 0
 
     def draw(self, screen: pg.surface.Surface):
-        """Dibuja al enemigo en la pantalla.
+        """Dibuja el personaje en la pantalla.
 
         Args:
-            screen (pg.surface.Surface): Superficie de la pantalla donde se dibuja al enemigo.
+        - screen (pg.surface.Surface): Superficie de la pantalla en la que se dibujará el personaje.
         """
-        self.__actual_img_animation = self.__actual_animation[self.__initial_frame]
-        screen.blit(self.__actual_img_animation, self.__rect)
+        if DEBUG:
+            pg.draw.rect(screen, 'red', self.rect)
+            
+        self.actual_img_animation = self.actual_animation[self.initial_frame]
+        screen.blit(self.actual_img_animation, self.rect)
