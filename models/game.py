@@ -1,4 +1,5 @@
 import pygame
+import sys
 from constantes import *
 from menus import *
 from nivel import cargar_nivel
@@ -19,6 +20,8 @@ class Game:
         self.game_over = False
         
         pygame.mixer.init()
+        pygame.mixer.music.load("./assets/sounds/main_theme.mp3")
+        pygame.mixer.music.play(-1)
         
         self.font = pygame.font.Font(None, 36)
         
@@ -26,6 +29,7 @@ class Game:
         self.plataformas = None
         self.cajas = None
         self.enemigos = None
+        self.bombas = None
         self.balas_enemigas = None
         
         crear_tabla_ranking()
@@ -53,17 +57,17 @@ class Game:
         
         match nivel:
             case 1:
-                self.anakin, self.plataformas, self.cajas, self.fondo, self.enemigos = cargar_nivel("nivel1.json")
+                self.anakin, self.plataformas, self.cajas, self.fondo, self.enemigos, self.bombas = cargar_nivel("nivel1.json")
                 self.bg = pygame.image.load(self.fondo)
                 self.bg = pygame.transform.scale(self.bg, (ANCHO_VENTANA, ALTO_VENTANA))
                 self.cronometro = 60 * 1000
             case 2:
-                self.anakin, self.plataformas, self.cajas, self.fondo, self.enemigos = cargar_nivel("nivel2.json")
+                self.anakin, self.plataformas, self.cajas, self.fondo, self.enemigos, self.bombas = cargar_nivel("nivel2.json")
                 self.bg = pygame.image.load(self.fondo)
                 self.bg = pygame.transform.scale(self.bg, (ANCHO_VENTANA, ALTO_VENTANA))
                 self.cronometro = 60 * 1000
             case 3:
-                self.anakin, self.plataformas, self.cajas, self.fondo, self.enemigos = cargar_nivel("nivel3.json")
+                self.anakin, self.plataformas, self.cajas, self.fondo, self.enemigos, self.bombas = cargar_nivel("nivel3.json")
                 self.bg = pygame.image.load(self.fondo)
                 self.bg = pygame.transform.scale(self.bg, (ANCHO_VENTANA, ALTO_VENTANA))
                 self.cronometro = 60 * 1000
@@ -105,10 +109,8 @@ class Game:
             self.iniciar_juego(self.nivel_actual)
     
     def mostrar_ranking(self):
-        # Obtener el ranking desde la base de datos
         ranking = obtener_ranking()
-
-        # Mostrar la pantalla de ranking (puedes implementar esta función según tus necesidades)
+        
         mostrar_pantalla_ranking(self.screen, ranking)
     
     def handle_key_input(self):
@@ -136,13 +138,18 @@ class Game:
                 self.iniciar_nivel = False
         
         self.enemigos.update(delta_ms, self.plataformas.sprites())
-        self.anakin.update(delta_ms, self.plataformas.sprites(), self.enemigos, self.cajas)
+        self.anakin.update(delta_ms, self.plataformas.sprites(), self.enemigos, self.cajas, self.bombas)
         
         if self.anakin.get_vida() <= 0:
             self.game_over = True
             self.iniciar_nivel = False
         
         self.verificar_condiciones()
+        
+        if self.game_over:
+            self.mostrar_mensaje("Game Over")
+            menu_principal(self.screen, self.iniciar_juego)
+            self.game_over = False
     
     def draw(self):
         """Dibuja los elementos del juego en la pantalla.
@@ -156,11 +163,8 @@ class Game:
         self.plataformas.draw(self.screen)
         self.cajas.draw(self.screen)
         self.enemigos.draw(self.screen)
+        self.bombas.draw(self.screen)
         self.anakin.draw(self.screen)
-        
-        if self.game_over:
-            self.mostrar_mensaje("Game Over")
-            self.mostrar_menu_principal()
         
         # Dibujar la puntuación en la pantalla
         puntuacion_texto = f"Puntuación: {self.anakin.get_puntos()}"
@@ -181,17 +185,6 @@ class Game:
         
         pygame.display.update()
     
-    def mostrar_menu_principal(self):
-        accion_menu = menu_principal(self.screen, self.iniciar_juego)
-        
-        if accion_menu == "iniciar_juego":
-            self.iniciar_juego(1)
-            pygame.mixer.music.load("./assets/sounds/stage_music.mp3")
-            pygame.mixer.music.play(-1)
-        elif accion_menu == "salir":
-            pygame.quit()
-            quit()
-    
     def run(self):
         """Inicia la ejecución del juego.
         
@@ -199,15 +192,17 @@ class Game:
         Dentro del bucle, maneja eventos, procesa la entrada del teclado, actualiza
         el estado del juego y dibuja los elementos en la pantalla
         """
-        self.mostrar_menu_principal()
+        menu_principal(self.screen, self.iniciar_juego)
         
         while EJECUTANDO:
             self.handle_events()
+            
             if self.PAUSA:
                 pausar_juego(self.screen, [self.PAUSA])
                 self.PAUSA = False
+                
             self.handle_key_input()
             self.update()
             self.draw()
-            
-        pygame.quit()
+        
+        sys.exit()

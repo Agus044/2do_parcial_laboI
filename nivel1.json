@@ -18,6 +18,10 @@
         {"enemie_type": 1, "x": 150, "y": 230},
         {"enemie_type": 1, "x": 350, "y": 480},
         {"enemie_type": 1, "x": 350, "y": 100}
+    ],
+    "bombas": [
+        {"x": 380, "y": 330, "imagen": "./assets/items/bomb/bomb_iddle.png"},
+        {"x": 530, "y": 80, "imagen": "./assets/items/bomb/bomb_iddle.png"}
     ]
 
 }

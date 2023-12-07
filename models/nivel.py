@@ -13,7 +13,8 @@ def cargar_nivel(nombre_nivel):
 
     Returns:
         tuple: Una tupla que contiene un objeto Personaje, un grupo de plataformas (Plataforma),
-        un grupo de cajas (Caja), y la ruta de la imagen de fondo.
+        un grupo de cajas (Caja), un grupo de enemigos (Enemigo),
+        un grupo de bombas (Bomba) y la ruta de la imagen de fondo.
     """
     with open(nombre_nivel, "r") as archivo:
         configuracion = json.load(archivo)
@@ -28,9 +29,12 @@ def cargar_nivel(nombre_nivel):
     plataformas = pygame.sprite.Group([Plataforma(p["x"], p["y"], p["ancho"], p["alto"], p["imagen"]) for p in config_plataformas])
 
     config_cajas = configuracion.get("cajas", [])
-    cajas = pygame.sprite.Group([Caja(c["x"], c["y"], c["imagen"], puntos=10) for c in config_cajas])
+    cajas = pygame.sprite.Group([Caja(c["x"], c["y"], c["imagen"]) for c in config_cajas])
+    
+    config_bombas = configuracion.get("bombas", [])
+    bombas = pygame.sprite.Group([Caja(c["x"], c["y"], c["imagen"]) for c in config_bombas])
     
     config_enemigos = configuracion.get("enemigos", [])
     enemigos = pygame.sprite.Group([Enemigo(e["enemie_type"], e["x"], e["y"]) for e in config_enemigos])
     
-    return anakin, plataformas, cajas, fondo, enemigos
+    return anakin, plataformas, cajas, fondo, enemigos, bombas

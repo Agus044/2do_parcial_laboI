@@ -1,7 +1,7 @@
 import pygame as pg
 
 class Caja(pg.sprite.Sprite):
-    def __init__(self, coord_x: int, coord_y: int, image_path: str, puntos) -> None:
+    def __init__(self, coord_x: int, coord_y: int, image_path: str) -> None:
         """Inicializa un objeto de tipo Caja.
 
         Args:
@@ -14,7 +14,6 @@ class Caja(pg.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = coord_x
         self.rect.y = coord_y
-        self.puntos = puntos
     
     def desaparecer(self):
         """Eliminara la caja del grupo a donde pertenece.

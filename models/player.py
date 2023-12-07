@@ -29,6 +29,7 @@ class Personaje(pg.sprite.Sprite):
         self.__shoot_l = sf.get_surface_from_spritesheet('./assets/player/Attack/Shoot/player_shoot.png', 14, 1, flip=True)
         self.__sound_shoot = pg.mixer.Sound("./assets/sounds/anakin_attack.wav")
         self.__sound_box = pg.mixer.Sound("./assets/sounds/box_sound.wav")
+        self.__sound_bomb = pg.mixer.Sound("./assets/sounds/bomb_explode.wav")
         
         self.__move_x = coord_x
         self.__move_y = coord_y
@@ -201,7 +202,8 @@ class Personaje(pg.sprite.Sprite):
             
             if colision_enemigos:
                 self.__vida -= 1
-                self.__puntos -= 10
+                if self.__puntos > 0:
+                    self.__puntos -= 10
                 self.__invulnerable = True
                 self.__invulnerable_timer = pg.time.get_ticks()
 
@@ -246,7 +248,7 @@ class Personaje(pg.sprite.Sprite):
                     self.__is_jumping = False
                     self.__move_y = 0
     
-    def update(self, delta_ms: int, plataformas, enemigos, cajas):
+    def update(self, delta_ms: int, plataformas, enemigos, cajas, bombas):
         """Actualiza el estado del personaje.
         
         Args:
@@ -266,11 +268,18 @@ class Personaje(pg.sprite.Sprite):
             proyectil.update()
         
         # Detectar colisiones con cajas
-        colisiones = pg.sprite.spritecollide(self, cajas, dokill=True)
-        for caja in colisiones:
-            self.__puntos += caja.puntos
+        colisiones_caja = pg.sprite.spritecollide(self, cajas, dokill=True)
+        if colisiones_caja:
+            self.aumentar_puntuacion(10)
             self.__sound_box.play()
-            print(f"Puntos: {self.__puntos}")
+        
+        
+        # Detectar colisiones con bombas
+        colisiones_bombas = pg.sprite.spritecollide(self, bombas, dokill=True)
+        if colisiones_bombas:
+            self.__puntos -= 10
+            self.__vida -= 1
+            self.__sound_bomb.play()
         
         #detectar colisiones laser con enemigos
         for proyectil in self.__proyectiles:

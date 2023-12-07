@@ -19,13 +19,13 @@ class Enemigo(pg.sprite.Sprite):
         """
         super().__init__()
         if enemie_type == 1:
-            self.walk_r = sf.get_surface_from_spritesheet("./assets/enemie1/Iddle/enemie1_iddle.png", 9, 1)
-            self.walk_l = sf.get_surface_from_spritesheet("./assets/enemie1/Iddle/enemie1_iddle.png", 9, 1, flip=True)
+            self.walk_r = sf.get_surface_from_spritesheet("./assets/enemie1/Walk/enemie1_walk.png", 9, 1)
+            self.walk_l = sf.get_surface_from_spritesheet("./assets/enemie1/Walk/enemie1_walk.png", 9, 1, flip=True)
             self.shoot_r = sf.get_surface_from_spritesheet("./assets/enemie1/Shoot/enemie1_shoot.png", 8, 1)
             self.shoot_l = sf.get_surface_from_spritesheet("./assets/enemie1/Shoot/enemie1_shoot.png", 8, 1, flip=True)
         elif enemie_type == 2:
-            self.walk_r = sf.get_surface_from_spritesheet("./assets/enemie2/Iddle/enemie2_iddle.png", 8, 1)
-            self.walk_l = sf.get_surface_from_spritesheet("./assets/enemie2/Iddle/enemie2_iddle.png", 8, 1, flip=True)
+            self.walk_r = sf.get_surface_from_spritesheet("./assets/enemie2/Walk/enemie2_walk.png", 8, 1)
+            self.walk_l = sf.get_surface_from_spritesheet("./assets/enemie2/Walk/enemie2_walk.png", 8, 1, flip=True)
             self.shoot_r = sf.get_surface_from_spritesheet("./assets/enemie2/Shoot/enemie2_shoot.png", 6, 1)
             self.shoot_l = sf.get_surface_from_spritesheet("./assets/enemie2/Shoot/enemie2_shoot.png", 6, 1, flip=True)
         elif enemie_type == 3:
