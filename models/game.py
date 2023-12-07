@@ -2,6 +2,7 @@ import pygame
 from constantes import *
 from menus import *
 from nivel import cargar_nivel
+from ranking import *
 
 class Game:
     def __init__(self) -> None:
@@ -16,11 +17,8 @@ class Game:
         self.iniciar_nivel = False
         self.nivel_actual = 1
         self.game_over = False
-        self.puntuacion = 0
         
         pygame.mixer.init()
-        pygame.mixer.music.load("./assets/sounds/main_theme.mp3")
-        pygame.mixer.music.play(-1)
         
         self.font = pygame.font.Font(None, 36)
         
@@ -28,6 +26,9 @@ class Game:
         self.plataformas = None
         self.cajas = None
         self.enemigos = None
+        self.balas_enemigas = None
+        
+        crear_tabla_ranking()
     
     def handle_events(self):
         """Maneja los eventos del juego, respondiendo a las teclas presionadas o liberadas.
@@ -44,7 +45,7 @@ class Game:
     
     def iniciar_juego(self, nivel):
         """Inicializara el nivel del juego seleccionado
-
+        
         Args:
             nivel (int): nivel especifico del juego
         """
@@ -73,6 +74,42 @@ class Game:
         pygame.display.flip()
         pygame.time.delay(2000) 
     
+    def verificar_condiciones(self):
+        """Verifica las condiciones del juego para determinar si de debe
+        avanzar a otro nivel, mostrar el mensaje de victoria o game over, y
+        actualizar el ranking.
+        """
+        if self.nivel_actual == 3 and len(self.cajas) == 0 and len(self.enemigos) == 0:
+            # En el último nivel y todas las cajas y enemigos eliminados
+            self.game_over = True
+            self.iniciar_nivel = False
+            self.mostrar_mensaje("¡Victoria!")
+            
+            if self.anakin.get_puntos() > 0:
+                # Pide al jugador su nombre para la tabla de ranking
+                nombre_jugador = input("Ingresa tu nombre: ")
+                
+                # Agregar la puntuación al ranking con el nombre del jugador
+                agregar_puntuacion(nombre_jugador, self.anakin.get_puntos())
+                
+                # Obtener el ranking desde la base de datos
+                ranking = obtener_ranking()
+                
+                # Mostrar la pantalla de ranking
+                mostrar_pantalla_ranking(self.screen, ranking)
+
+        elif len(self.cajas) == 0 and len(self.enemigos) == 0:
+            # Avanzar al siguiente nivel si se cumplen las condiciones
+            self.nivel_actual += 1
+            self.iniciar_nivel = False
+            self.iniciar_juego(self.nivel_actual)
+    
+    def mostrar_ranking(self):
+        # Obtener el ranking desde la base de datos
+        ranking = obtener_ranking()
+
+        # Mostrar la pantalla de ranking (puedes implementar esta función según tus necesidades)
+        mostrar_pantalla_ranking(self.screen, ranking)
     
     def handle_key_input(self):
         """Maneja la entrada del teclado para el juego.
@@ -85,7 +122,6 @@ class Game:
 
     def update(self):
         """Actualiza el estado del juego.
-
         Calcula el tiempo transcurrido desde la última actualización, 
         llama al método `update` del objeto `anakin` para actualizar su estado,
         y actualiza las plataformas.
@@ -96,74 +132,82 @@ class Game:
             self.cronometro -= delta_ms
             
             if self.cronometro <= 0:
-                print("Tiempo agotado!")
                 self.game_over = True
                 self.iniciar_nivel = False
-        else:
-            self.cronometro = 60 * 1000
         
-        # Detectar colisiones con cajas
-        colisiones = pygame.sprite.spritecollide(self.anakin, self.cajas, dokill=True)
-
-        for caja in colisiones:
-            self.puntuacion += caja.puntos
-            print(f"Puntos: {self.puntuacion}")
-        
-        # Detectar colisiones con enemigos
-        colisiones_enemigos = pygame.sprite.spritecollide(self.anakin, self.enemigos, dokill=True)
-        for enemigo in colisiones_enemigos:
-            # Lógica de colisión con enemigo (por ejemplo, disminuir la vida del personaje)
-            print("Colisión con enemigo!")
-        
-        self.anakin.update(delta_ms, self.plataformas.sprites())
         self.enemigos.update(delta_ms, self.plataformas.sprites())
-
+        self.anakin.update(delta_ms, self.plataformas.sprites(), self.enemigos, self.cajas)
+        
+        if self.anakin.get_vida() <= 0:
+            self.game_over = True
+            self.iniciar_nivel = False
+        
+        self.verificar_condiciones()
+    
     def draw(self):
         """Dibuja los elementos del juego en la pantalla.
-
+        
         Rellena la pantalla con un color de fondo, dibuja el fondo y luego
         dibuja las plataformas, cajas, enemigos y el personaje (`anakin`).
         """
         self.screen.fill(BLACK)
         self.screen.blit(self.bg, self.bg.get_rect())
-
+        
         self.plataformas.draw(self.screen)
         self.cajas.draw(self.screen)
         self.enemigos.draw(self.screen)
-
         self.anakin.draw(self.screen)
         
         if self.game_over:
             self.mostrar_mensaje("Game Over")
-            menu_principal(self.screen, self.iniciar_juego)
-
+            self.mostrar_menu_principal()
+        
+        # Dibujar la puntuación en la pantalla
+        puntuacion_texto = f"Puntuación: {self.anakin.get_puntos()}"
+        texto_puntuacion = self.font.render(puntuacion_texto, True, WHITE)
+        self.screen.blit(texto_puntuacion, (ANCHO_VENTANA - texto_puntuacion.get_width() - 10, 10))
+        
+        # Dibujar las vidas en la pantalla
+        vidas_texto = f"Vidas: {self.anakin.get_vida()}"
+        texto_vidas = self.font.render(vidas_texto, True, WHITE)
+        self.screen.blit(texto_vidas, (10, 50))
+        
         # Dibujar el cronómetro en la pantalla
         minutos = int(self.cronometro / 60000)
         segundos = int((self.cronometro % 60000) / 1000)
         tiempo_texto = f"{minutos:02}:{segundos:02}"
         texto = self.font.render(tiempo_texto, True, WHITE)
         self.screen.blit(texto, (10, 10))
-
+        
         pygame.display.update()
-
+    
+    def mostrar_menu_principal(self):
+        accion_menu = menu_principal(self.screen, self.iniciar_juego)
+        
+        if accion_menu == "iniciar_juego":
+            self.iniciar_juego(1)
+            pygame.mixer.music.load("./assets/sounds/stage_music.mp3")
+            pygame.mixer.music.play(-1)
+        elif accion_menu == "salir":
+            pygame.quit()
+            quit()
+    
     def run(self):
         """Inicia la ejecución del juego.
-
+        
         Muestra el menú principal y luego ejecuta un bucle principal del juego.
         Dentro del bucle, maneja eventos, procesa la entrada del teclado, actualiza
         el estado del juego y dibuja los elementos en la pantalla
         """
-        menu_principal(self.screen, self.iniciar_juego)
-
+        self.mostrar_menu_principal()
+        
         while EJECUTANDO:
             self.handle_events()
-
             if self.PAUSA:
                 pausar_juego(self.screen, [self.PAUSA])
                 self.PAUSA = False
-
             self.handle_key_input()
             self.update()
             self.draw()
-
+            
         pygame.quit()

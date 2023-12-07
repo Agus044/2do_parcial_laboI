@@ -17,16 +17,9 @@
         {"x": 50, "y": 230, "imagen": "./assets/items/box/box.png"}
     ],
     "enemigos": [
-        {
-            "enemie_type": 1,
-            "x": 100,
-            "y": 200
-        },
-        {
-            "enemie_type": 2,
-            "x": 300,
-            "y": 200
-        }
+        {"enemie_type": 2, "x": 150, "y": 360},
+        {"enemie_type": 2, "x": 410, "y": 230},
+        {"enemie_type": 2, "x": 50, "y": 230}
     ]
 
 }

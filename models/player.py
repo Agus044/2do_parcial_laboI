@@ -7,7 +7,7 @@ class Personaje(pg.sprite.Sprite):
 
     def __init__(self, coord_x: int, coord_y: int, frame_rate = 100, speed_walk = 6, gravity = 16, jump = 32):
         """Inicializa una instancia de la clase Personaje.
-
+        
         Parameters:
         - `coord_x` (int): La coordenada x inicial del personaje.
         - `coord_y` (int): La coordenada y inicial del personaje.
@@ -27,6 +27,8 @@ class Personaje(pg.sprite.Sprite):
         self.__attack_l = sf.get_surface_from_spritesheet('./assets/player/Attack/Melee/player_atk_melee.png', 10, 1, flip=True)
         self.__shoot_r = sf.get_surface_from_spritesheet('./assets/player/Attack/Shoot/player_shoot.png', 14, 1)
         self.__shoot_l = sf.get_surface_from_spritesheet('./assets/player/Attack/Shoot/player_shoot.png', 14, 1, flip=True)
+        self.__sound_shoot = pg.mixer.Sound("./assets/sounds/anakin_attack.wav")
+        self.__sound_box = pg.mixer.Sound("./assets/sounds/box_sound.wav")
         
         self.__move_x = coord_x
         self.__move_y = coord_y
@@ -47,15 +49,34 @@ class Personaje(pg.sprite.Sprite):
         self.__is_attaking = False
         self.__is_shooting = False
         
+        self.__puntos = 0
         self.__vida = 3
+        self.__invulnerable = False
+        self.__invulnerable_duration = 2000 #en milisegundos
+        self.__invulnerable_timer = 0
         self.__tiempo_transcurrido = 0
         self.__tiempo_last_jump = 0
         self.__interval_time_jump = 100
-
     
+    def get_vida(self):
+        """Devuelve el valor actual de la vida del personaje."""
+        return self.__vida
+    
+    def get_puntos(self):
+        """devuelve el valor actual de los puntos acumulados
+        por el personaje.
+        """
+        return self.__puntos
+    
+    def aumentar_puntuacion(self, puntos):
+        """Aumenta la puntuacion actual segun si agarro una caja
+        o mato a algun enemigo.
+        """
+        self.__puntos += puntos
+        
     def __set_x_animations_preset(self, move_x, animation_list: list[pg.surface.Surface], look_r: bool):
-        """_summary_
-
+        """Configura las propiedades relacionadas con la animacion horizontal del jugador.
+        
         Args:
             move_x (_type_): _description_
             animation_list (list[pg.surface.Surface]): _description_
@@ -77,7 +98,7 @@ class Personaje(pg.sprite.Sprite):
     
     def walk(self, direction: str = 'Right'):
         """Inicia la animación de caminar en la dirección especificada.
-
+        
         Args:
             direction (str): Dirección del movimiento ('Right' para derecha, 'Left' para izquierda).
         """
@@ -101,7 +122,7 @@ class Personaje(pg.sprite.Sprite):
     
     def jump(self, jumping: bool):
         """Inicia o detiene la animación de salto del jugador.
-
+        
         Args:
             jumping (bool): True para iniciar el salto, False para detenerlo.
         """
@@ -123,7 +144,9 @@ class Personaje(pg.sprite.Sprite):
         """Inicia la animación de disparo del personaje.
         """
         if not self.__is_jumping and not self.__is_attaking:
-            proyectil = Proyectil(self.rect.x, self.rect.y, 5, 0, (0, 0, 255))
+            # Ajusta la posición inicial del proyectil según la dirección del personaje
+            offset = 20 if self.__is_looking_right else -20
+            proyectil = Proyectil(self.rect.x + offset, self.rect.y, 5, 0, BLUE, self.__is_looking_right)
             self.__proyectiles.add(proyectil)
             shoot_animation = self.__shoot_r if self.__is_looking_right else self.__shoot_l
             self.__actual_animation = shoot_animation
@@ -131,7 +154,7 @@ class Personaje(pg.sprite.Sprite):
     
     def __set_borders_limits(self):
         """Limita el movimiento del jugador dentro de los bordes de la ventana.
-
+        
         Returns:
             int: Cantidad de píxeles que puede moverse horizontalmente y verticalmente.
         """
@@ -153,25 +176,41 @@ class Personaje(pg.sprite.Sprite):
     
     def check_collision_with_plataformas(self, plataformas):
         """Verifica la colisión del personaje con las plataformas.
-
+        
         Args:
-        - `plataformas` (List[Plataforma]): Lista de plataformas en el juego.
-
+        plataformas (List[Plataforma]): Lista de plataformas en el juego.
+        
         Returns:
-        - ([Plataforma]): La plataforma con la cual el personaje colisiona desde arriba, o None si no hay colisión.
+        ([Plataforma]): La plataforma con la cual el personaje colisiona desde arriba, o None si no hay colisión.
         """
         colisiones = pg.sprite.spritecollide(self, plataformas, False)
         for plataforma in colisiones:
             if self.rect.y < plataforma.rect.y:
                 return plataforma
         return None
+    
+    def check_collision_with_enemie(self, enemigos):
+        """Verifica la colision del personaje con el enemigo.
+
+        Args:
+            enemigos (List[Enemigo]): Lista de enemigos en el juego.
+        """
+        if not self.__invulnerable:
+            colision_enemigos = pg.sprite.spritecollide(self, enemigos, False)
+            
+            
+            if colision_enemigos:
+                self.__vida -= 1
+                self.__puntos -= 10
+                self.__invulnerable = True
+                self.__invulnerable_timer = pg.time.get_ticks()
 
     def do_movement(self, delta_ms: int, plataformas):
         """Realiza el movimiento del personaje y maneja las colisiones con las plataformas.
-
+        
         Args:
-        - `delta_ms` (int): El tiempo transcurrido desde la última actualización en milisegundos.
-        - `plataformas` (List[Plataforma]): Lista de plataformas en el juego.
+            delta_m` (int): El tiempo transcurrido desde la última actualización en milisegundos.
+            plataformas (List[Plataforma]): Lista de plataformas en el juego.
         """
         self.__player_move_time += delta_ms
         if self.__player_move_time >= self.__frame_rate:
@@ -181,7 +220,6 @@ class Personaje(pg.sprite.Sprite):
             self.rect.y += pixel_move_y
             
             plataforma_colisionada = self.check_collision_with_plataformas(plataformas)
-
             if plataforma_colisionada:
                 # Ajustar la posición del jugador en la plataforma
                 self.rect.y = plataforma_colisionada.rect.y - self.rect.height
@@ -193,9 +231,9 @@ class Personaje(pg.sprite.Sprite):
 
     def do_animation(self, delta_ms: int):
         """Realiza la animación del personaje.
-
+        
         Args:
-        - `delta_ms` (int): El tiempo transcurrido desde la última actualización en milisegundos.
+            delta_ms (int): El tiempo transcurrido desde la última actualización en milisegundos.
         """
         self.__player_animation_time += delta_ms
         if self.__player_animation_time >= self.__frame_rate:
@@ -208,34 +246,55 @@ class Personaje(pg.sprite.Sprite):
                     self.__is_jumping = False
                     self.__move_y = 0
     
-    def update(self, delta_ms: int, plataformas):
+    def update(self, delta_ms: int, plataformas, enemigos, cajas):
         """Actualiza el estado del personaje.
-
+        
         Args:
-        - `delta_ms` (int): El tiempo transcurrido desde la última actualización en milisegundos.
-        - `plataformas` (List[Plataforma]): Lista de plataformas en el juego.
+            delta_ms (int): El tiempo transcurrido desde la última actualización en milisegundos.
+            plataformas (List[Plataforma]): Lista de plataformas en el juego.
         """
         self.do_movement(delta_ms, plataformas)
         self.do_animation(delta_ms)
+        self.check_collision_with_enemie(enemigos)
+        
+        if self.__invulnerable:
+            current_time = pg.time.get_ticks()
+            if current_time - self.__invulnerable_timer > self.__invulnerable_duration:
+                self.__invulnerable = False
         
         for proyectil in self.__proyectiles:
             proyectil.update()
-            # Verificar colisión con plataformas
-            #colisiones = pg.sprite.spritecollide(proyectil, plataformas, True)
-            #if colisiones:
-            #    proyectil.kill()
+        
+        # Detectar colisiones con cajas
+        colisiones = pg.sprite.spritecollide(self, cajas, dokill=True)
+        for caja in colisiones:
+            self.__puntos += caja.puntos
+            self.__sound_box.play()
+            print(f"Puntos: {self.__puntos}")
+        
+        #detectar colisiones laser con enemigos
+        for proyectil in self.__proyectiles:
+            colision_laser = pg.sprite.spritecollide(proyectil, enemigos, dokill=True)
+            if colision_laser:
+                self.aumentar_puntuacion(30)
+        
+        # Eliminar proyectiles fuera de la pantalla
+        self.__proyectiles = pg.sprite.Group([p for p in self.__proyectiles if p.rect.x >= 0 and p.rect.x <= ANCHO_VENTANA])
     
     def draw(self, screen: pg.surface.Surface):
         """Dibuja el personaje en la pantalla.
-
+        
         Args:
-        - screen (pg.surface.Surface): Superficie de la pantalla en la que se dibujará el personaje.
+            screen (pg.surface.Surface): Superficie de la pantalla en la que se dibujará el personaje.
         """
         if DEBUG:
             pg.draw.rect(screen, 'red', self.rect)
             
         self.__actual_img_animation = self.__actual_animation[self.__initial_frame]
         screen.blit(self.__actual_img_animation, self.rect)
+        
+        for proyectil in self.__proyectiles:
+            proyectil.draw(screen)
     
     def handle_events(self, events):
         """Maneja los eventos del juego, respondiendo a las teclas presionadas o liberadas.
@@ -274,5 +333,6 @@ class Personaje(pg.sprite.Sprite):
                 self.__tiempo_last_jump = self.__tiempo_transcurrido
         elif keys[pg.K_a] and not keys[pg.K_t] and not keys[pg.K_SPACE]:
             self.shoot()
+            self.__sound_shoot.play()
         elif keys[pg.K_t] and not keys[pg.K_a] and not keys[pg.K_SPACE]:
             self.attack()

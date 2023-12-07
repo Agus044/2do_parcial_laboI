@@ -14,16 +14,11 @@
         {"x": 350, "y": 180, "imagen": "./assets/items/box/box.png"}
     ],
     "enemigos": [
-        {
-            "enemie_type": 1,
-            "x": 100,
-            "y": 200
-        },
-        {
-            "enemie_type": 2,
-            "x": 300,
-            "y": 200
-        }
+        {"enemie_type": 1, "x": 150, "y": 230},
+        {"enemie_type": 2, "x": 350, "y": 480},
+        {"enemie_type": 2, "x": 550, "y": 280},
+        {"enemie_type": 1, "x": 300, "y": 180},
+        {"enemie_type": 3, "x": 700, "y": 480}
     ]
 
 }
