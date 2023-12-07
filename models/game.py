@@ -73,6 +73,11 @@ class Game:
                 self.cronometro = 60 * 1000
     
     def mostrar_mensaje(self, mensaje):
+        """Muestra un mensaje en el centro de la pantalla durante un breve período.
+        
+        Args:
+            mensaje (str): El mensaje que se mostrará en la pantalla.
+        """
         text = self.font.render(mensaje, True, WHITE)
         self.screen.blit(text, (ANCHO_VENTANA // 2 - text.get_width() // 2, ALTO_VENTANA // 2 - text.get_height() // 2))
         pygame.display.flip()
@@ -93,15 +98,13 @@ class Game:
                 # Pide al jugador su nombre para la tabla de ranking
                 nombre_jugador = input("Ingresa tu nombre: ")
                 
-                # Agregar la puntuación al ranking con el nombre del jugador
                 agregar_puntuacion(nombre_jugador, self.anakin.get_puntos())
                 
-                # Obtener el ranking desde la base de datos
                 ranking = obtener_ranking()
                 
                 # Mostrar la pantalla de ranking
                 mostrar_pantalla_ranking(self.screen, ranking)
-
+                
         elif len(self.cajas) == 0 and len(self.enemigos) == 0:
             # Avanzar al siguiente nivel si se cumplen las condiciones
             self.nivel_actual += 1
@@ -109,6 +112,8 @@ class Game:
             self.iniciar_juego(self.nivel_actual)
     
     def mostrar_ranking(self):
+        """Muestra la pantalla de ranking en la ventana del juego.
+        """
         ranking = obtener_ranking()
         
         mostrar_pantalla_ranking(self.screen, ranking)
@@ -120,13 +125,13 @@ class Game:
         del objeto `anakin` para procesar la entrada del personaje.
         """
         keys = pygame.key.get_pressed()
-        self.anakin.handle_key_input(keys, self.clock.get_rawtime())
+        self.anakin.handle_key_input(keys, pygame.time.get_ticks())
 
     def update(self):
         """Actualiza el estado del juego.
         Calcula el tiempo transcurrido desde la última actualización, 
         llama al método `update` del objeto `anakin` para actualizar su estado,
-        y actualiza las plataformas.
+        las plataformas, los enemigos, las cajas y las bombas.
         """
         delta_ms = self.clock.tick(FPS)
         

@@ -10,6 +10,7 @@ class Proyectil(pg.sprite.Sprite):
             velocidad_x (int): Velocidad x inicial del proyectil
             velocidad_y (int): Velocidad y inicial del proyectil
             color (tuple): Color que tendra el proyectil
+            is_looking_right (bool): Direccion del proyectil True: derecha, False: izquierda
         """
         super().__init__()
 
@@ -34,6 +35,6 @@ class Proyectil(pg.sprite.Sprite):
         """Dibuja el proyectil en pantalla.
 
         Args:
-            screen (pg.surface.Surface): Superficie de la pantalla en la que se dibujará el personaje.
+            screen (pg.surface.Surface): Superficie de la pantalla en la que se dibujará el proyectil.
         """
         screen.blit(self.image, self.rect)

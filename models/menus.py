@@ -3,11 +3,11 @@ from constantes import *
 from boton import Boton
 
 def pausar_juego(screen, paused):
-    """_summary_
+    """Pausa el juego y muestra una pantalla de pausa.
     
     Args:
-        screen (_type_): _description_
-        paused (_type_): _description_
+        screen (pygame.Surface): La superficie de la pantalla del juego.
+        paused (bool): Indica si el juego está actualmente en estado pausado.
     """
     paused = True
     
@@ -73,8 +73,6 @@ def menu_opciones(screen, musica_activada=True):
                 musica_off_boton.handle_event(event)
                 volver_boton.handle_event(event)
         
-        pygame.mouse.get_rel()
-        
         screen.blit(fondo_opciones, (0, 0))
         
         font = pygame.font.Font(None, 36)
@@ -113,9 +111,9 @@ def menu_principal(screen, iniciar_juego):
     fondo_menu = pygame.image.load("./assets/background/menu_principal.jpg")
     fondo_menu = pygame.transform.scale(fondo_menu, (ANCHO_VENTANA, ALTO_VENTANA))
     
-    iniciar_boton = Boton(150, 200, 200, 50, "Iniciar Juego", BLUE, (0, 0, 255))
-    salir_boton = Boton(150, 300, 200, 50, "Salir", RED, (200, 0, 0))
-    opcion_boton = Boton(150, 400, 200, 50, "Opciones", GREEN, (0, 200, 0))
+    iniciar_boton = Boton(150, 200, 200, 50, "Iniciar Juego", BLUE, RED)
+    salir_boton = Boton(150, 300, 200, 50, "Salir", RED, BLUE)
+    opcion_boton = Boton(150, 400, 200, 50, "Opciones", GREEN, WHITE)
     
     en_menu = True
     
@@ -128,8 +126,6 @@ def menu_principal(screen, iniciar_juego):
                 iniciar_boton.handle_event(event)
                 salir_boton.handle_event(event)
                 opcion_boton.handle_event(event)
-        
-        pygame.mouse.get_rel()
         
         screen.blit(fondo_menu, (0, 0))
         
@@ -156,6 +152,13 @@ def menu_principal(screen, iniciar_juego):
                 en_menu = True
 
 def mostrar_pantalla_ranking(screen, ranking):
+    """Muestra la pantalla de ranking en la ventana del juego.
+
+    Args:
+        screen (pygame.Surface): La superficie de la ventana del juego.
+        ranking (list): Una lista de tuplas que contiene la información del ranking,
+            donde cada tupla tiene el nombre del jugador y su puntuación.
+    """
     screen.fill(BLACK)
     
     font = pygame.font.Font(None, 36)
@@ -175,6 +178,8 @@ def mostrar_pantalla_ranking(screen, ranking):
     esperar_tecla()
 
 def esperar_tecla():
+    """Espera a que el jugador presione una tecla antes de continuar.
+    """
     esperando = True
     while esperando:
         for event in pygame.event.get():

@@ -5,13 +5,13 @@ from proyectil import Proyectil
 
 class Personaje(pg.sprite.Sprite):
 
-    def __init__(self, coord_x: int, coord_y: int, frame_rate = 100, speed_walk = 6, gravity = 16, jump = 32):
+    def __init__(self, coord_x: int, coord_y: int, frame_rate = 70, speed_walk = 6, gravity = 16, jump = 32):
         """Inicializa una instancia de la clase Personaje.
         
         Parameters:
         - `coord_x` (int): La coordenada x inicial del personaje.
         - `coord_y` (int): La coordenada y inicial del personaje.
-        - `frame_rate` (int): La velocidad de fotogramas de la animación. Default: 100
+        - `frame_rate` (int): La velocidad de fotogramas de la animación. Default: 70
         - `speed_walk` (int): La velocidad de desplazamiento lateral. Default: 6
         - `gravity` (int): La fuerza de gravedad que afecta al personaje. Default: 16
         - `jump` (int): La potencia del salto del personaje. Default: 32
@@ -76,12 +76,12 @@ class Personaje(pg.sprite.Sprite):
         self.__puntos += puntos
         
     def __set_x_animations_preset(self, move_x, animation_list: list[pg.surface.Surface], look_r: bool):
-        """Configura las propiedades relacionadas con la animacion horizontal del jugador.
+        """Configura las propiedades relacionadas con la animación horizontal del jugador.
         
         Args:
-            move_x (_type_): _description_
-            animation_list (list[pg.surface.Surface]): _description_
-            look_r (bool): _description_
+            move_x (int): La velocidad de movimiento horizontal del jugador.
+            animation_list (list[pg.surface.Surface]): Una lista de superficies (imágenes) que representan las animaciones del jugador.
+            look_r (bool): Un valor booleano que indica si el jugador está mirando hacia la derecha (True) o hacia la izquierda (False).
         """
         self.__move_x = move_x
         self.__actual_animation = animation_list
@@ -211,7 +211,7 @@ class Personaje(pg.sprite.Sprite):
         """Realiza el movimiento del personaje y maneja las colisiones con las plataformas.
         
         Args:
-            delta_m` (int): El tiempo transcurrido desde la última actualización en milisegundos.
+            delta_ms (int): El tiempo transcurrido desde la última actualización en milisegundos.
             plataformas (List[Plataforma]): Lista de plataformas en el juego.
         """
         self.__player_move_time += delta_ms
@@ -254,6 +254,9 @@ class Personaje(pg.sprite.Sprite):
         Args:
             delta_ms (int): El tiempo transcurrido desde la última actualización en milisegundos.
             plataformas (List[Plataforma]): Lista de plataformas en el juego.
+            enemigos (List[Enemigo]): Lista de enemigos en el juego.
+            cajas (List[Caja]) Lista de cajas en el juego.
+            bombas (List[Bomba]) Lista de bombas en el juego.
         """
         self.do_movement(delta_ms, plataformas)
         self.do_animation(delta_ms)
