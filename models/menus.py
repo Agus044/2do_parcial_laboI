@@ -98,7 +98,7 @@ def menu_opciones(screen, musica_activada=True):
     return en_menu_principal
 
 
-def menu_principal(screen, iniciar_juego):
+def menu_principal(screen, iniciar_juego, ranking):
     """Muestra y gestiona el menú principal del juego.
     
     Muestra un fondo de menú, botones para iniciar el juego, salir y acceder al menú de opciones.
@@ -114,6 +114,8 @@ def menu_principal(screen, iniciar_juego):
     iniciar_boton = Boton(150, 200, 200, 50, "Iniciar Juego", BLUE, RED)
     salir_boton = Boton(150, 300, 200, 50, "Salir", RED, BLUE)
     opcion_boton = Boton(150, 400, 200, 50, "Opciones", GREEN, WHITE)
+    ranking_boton = Boton(400, 300, 200, 50, "Tabla de ranking", MAGENTA, GREEN)
+    niveles_boton = Boton(400, 400, 200, 50, "Seleccionar niveles", YELLOW, RED)
     
     en_menu = True
     
@@ -126,6 +128,8 @@ def menu_principal(screen, iniciar_juego):
                 iniciar_boton.handle_event(event)
                 salir_boton.handle_event(event)
                 opcion_boton.handle_event(event)
+                ranking_boton.handle_event(event)
+                niveles_boton.handle_event(event)
         
         screen.blit(fondo_menu, (0, 0))
         
@@ -133,6 +137,8 @@ def menu_principal(screen, iniciar_juego):
         iniciar_boton.draw(screen, font)
         salir_boton.draw(screen, font)
         opcion_boton.draw(screen, font)
+        ranking_boton.draw(screen, font)
+        niveles_boton.draw(screen, font)
         
         pygame.display.update()
         
@@ -145,6 +151,10 @@ def menu_principal(screen, iniciar_juego):
         elif salir_boton.hovered and pygame.mouse.get_pressed()[0]:
             pygame.quit()
             quit()
+        elif ranking_boton.hovered and pygame.mouse.get_pressed()[0]:
+            mostrar_pantalla_ranking(screen, ranking)
+        elif niveles_boton.hovered and pygame.mouse.get_pressed()[0]:
+            en_menu = seleccionar_niveles(screen, iniciar_juego)
         elif opcion_boton.hovered and pygame.mouse.get_pressed()[0]:
             en_menu = menu_opciones(screen, False)
             
@@ -185,3 +195,71 @@ def esperar_tecla():
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
                 esperando = False
+
+def seleccionar_niveles(screen, iniciar_juego):
+    """Sub-menú para seleccionar niveles del juego.
+
+    Permite al usuario elegir en qué nivel desea comenzar a jugar.
+
+    Args:
+        screen (pygame.Surface): La superficie de la pantalla del juego.
+        iniciar_juego (callable): Función que inicia el juego.
+        nivel_actual (int): Nivel actual seleccionado.
+
+    Returns:
+        bool: True si el usuario vuelve al menú principal, False de lo contrario.
+    """
+    fondo_niveles = pygame.image.load("./assets/background/bg_niveles.jpg")
+    fondo_niveles = pygame.transform.scale(fondo_niveles, (ANCHO_VENTANA, ALTO_VENTANA))
+    
+    nivel1_boton = Boton(150, 200, 200, 50, "Nivel 1", BLUE, RED)
+    nivel2_boton = Boton(150, 300, 200, 50, "Nivel 2", RED, GREEN)
+    nivel3_boton = Boton(150, 400, 200, 50, "Nivel 3", GREEN, BLUE)
+    volver_boton = Boton(150, 500, 200, 50, "Volver", YELLOW, MAGENTA)
+    
+    en_menu_niveles = True
+    en_menu_principal = False
+    
+    while en_menu_niveles and not en_menu_principal:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+            elif event.type in (pygame.MOUSEMOTION, pygame.MOUSEBUTTONDOWN):
+                nivel1_boton.handle_event(event)
+                nivel2_boton.handle_event(event)
+                nivel3_boton.handle_event(event)
+                volver_boton.handle_event(event)
+                
+        screen.blit(fondo_niveles, (0, 0))
+        font = pygame.font.Font(None, 36)
+        nivel1_boton.draw(screen, font)
+        nivel2_boton.draw(screen, font)
+        nivel3_boton.draw(screen, font)
+        volver_boton.draw(screen, font)
+        
+        pygame.display.update()
+        
+        if nivel1_boton.hovered and pygame.mouse.get_pressed()[0]:
+            en_menu_niveles = False
+            en_menu_principal = False
+            iniciar_juego(1)
+            pygame.mixer.music.load("./assets/sounds/stage_music.mp3")
+            pygame.mixer.music.play(-1)
+        elif nivel2_boton.hovered and pygame.mouse.get_pressed()[0]:
+            en_menu_niveles = False
+            en_menu_principal = False
+            iniciar_juego(2)
+            pygame.mixer.music.load("./assets/sounds/stage_music.mp3")
+            pygame.mixer.music.play(-1)
+        elif nivel3_boton.hovered and pygame.mouse.get_pressed()[0]:
+            en_menu_niveles = False
+            en_menu_principal = False
+            iniciar_juego(3)
+            pygame.mixer.music.load("./assets/sounds/stage_music.mp3")
+            pygame.mixer.music.play(-1)
+        elif volver_boton.hovered and pygame.mouse.get_pressed()[0]:
+            en_menu_niveles = False
+            en_menu_principal = True
+
+    return en_menu_principal

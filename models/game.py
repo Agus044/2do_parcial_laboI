@@ -16,7 +16,8 @@ class Game:
         self.PAUSA = False
         self.cronometro = 60 * 1000
         self.iniciar_nivel = False
-        self.nivel_actual = 1
+        self.nivel_actual = 0
+        self.puntos_acumulados = 0
         self.game_over = False
         
         pygame.mixer.init()
@@ -61,16 +62,19 @@ class Game:
                 self.bg = pygame.image.load(self.fondo)
                 self.bg = pygame.transform.scale(self.bg, (ANCHO_VENTANA, ALTO_VENTANA))
                 self.cronometro = 60 * 1000
+                self.nivel_actual = 1
             case 2:
                 self.anakin, self.plataformas, self.cajas, self.fondo, self.enemigos, self.bombas = cargar_nivel("nivel2.json")
                 self.bg = pygame.image.load(self.fondo)
                 self.bg = pygame.transform.scale(self.bg, (ANCHO_VENTANA, ALTO_VENTANA))
                 self.cronometro = 60 * 1000
+                self.nivel_actual = 2
             case 3:
                 self.anakin, self.plataformas, self.cajas, self.fondo, self.enemigos, self.bombas = cargar_nivel("nivel3.json")
                 self.bg = pygame.image.load(self.fondo)
                 self.bg = pygame.transform.scale(self.bg, (ANCHO_VENTANA, ALTO_VENTANA))
                 self.cronometro = 60 * 1000
+                self.nivel_actual = 3
     
     def mostrar_mensaje(self, mensaje):
         """Muestra un mensaje en el centro de la pantalla durante un breve período.
@@ -93,20 +97,18 @@ class Game:
             self.game_over = True
             self.iniciar_nivel = False
             self.mostrar_mensaje("¡Victoria!")
-            
-            if self.anakin.get_puntos() > 0:
+
+            if self.puntos_acumulados > 0:
                 # Pide al jugador su nombre para la tabla de ranking
                 nombre_jugador = input("Ingresa tu nombre: ")
                 
-                agregar_puntuacion(nombre_jugador, self.anakin.get_puntos())
-                
+                agregar_puntuacion(nombre_jugador, self.puntos_acumulados)
                 ranking = obtener_ranking()
-                
-                # Mostrar la pantalla de ranking
                 mostrar_pantalla_ranking(self.screen, ranking)
-                
+
         elif len(self.cajas) == 0 and len(self.enemigos) == 0:
             # Avanzar al siguiente nivel si se cumplen las condiciones
+            self.puntos_acumulados += self.anakin.get_puntos()
             self.nivel_actual += 1
             self.iniciar_nivel = False
             self.iniciar_juego(self.nivel_actual)
@@ -150,10 +152,11 @@ class Game:
             self.iniciar_nivel = False
         
         self.verificar_condiciones()
+        ranking = obtener_ranking()
         
         if self.game_over:
             self.mostrar_mensaje("Game Over")
-            menu_principal(self.screen, self.iniciar_juego)
+            menu_principal(self.screen, self.iniciar_juego, ranking)
             self.game_over = False
     
     def draw(self):
@@ -172,7 +175,7 @@ class Game:
         self.anakin.draw(self.screen)
         
         # Dibujar la puntuación en la pantalla
-        puntuacion_texto = f"Puntuación: {self.anakin.get_puntos()}"
+        puntuacion_texto = f"Puntuación: {self.puntos_acumulados + self.anakin.get_puntos()}"
         texto_puntuacion = self.font.render(puntuacion_texto, True, WHITE)
         self.screen.blit(texto_puntuacion, (ANCHO_VENTANA - texto_puntuacion.get_width() - 10, 10))
         
@@ -197,7 +200,8 @@ class Game:
         Dentro del bucle, maneja eventos, procesa la entrada del teclado, actualiza
         el estado del juego y dibuja los elementos en la pantalla
         """
-        menu_principal(self.screen, self.iniciar_juego)
+        ranking = obtener_ranking()
+        menu_principal(self.screen, self.iniciar_juego, ranking)
         
         while EJECUTANDO:
             self.handle_events()
